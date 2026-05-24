@@ -1,0 +1,27 @@
+# Cowrie User Database
+# Format: username:uid:password
+# These are intentionally weak default credentials commonly found on IoT devices
+# Attackers trying these will be granted access to the fake shell environment
+#
+# Common medical IoT / embedded Linux default credentials:
+
+root:0:root
+root:0:admin
+root:0:password
+root:0:123456
+root:0:toor
+root:0:raspberry
+root:0:philips
+root:0:monitor
+root:0:iot2023
+root:0:iot2024
+admin:1000:admin
+admin:1000:password
+admin:1000:1234
+admin:1000:admin123
+admin:1000:
+user:1001:user
+user:1001:password
+guest:1002:guest
+service:1003:service
+support:1004:support
