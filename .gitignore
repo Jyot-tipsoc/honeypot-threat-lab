@@ -1,0 +1,52 @@
+# ── Docker volumes / runtime data ────────────────────────────
+logs/
+data/
+downloads/
+*.offset
+
+# ── Python ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+
+# ── Database files (contain captured attacker data) ───────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ── IoC reports (may contain sensitive attacker IPs) ─────────
+ioc_report.json
+ioc_report.txt
+docs/final_ioc_report.txt
+
+# ── Captured malware (NEVER commit these) ─────────────────────
+cowrie/var/lib/cowrie/downloads/
+*.pcap
+*.bin
+
+# ── Environment / secrets ─────────────────────────────────────
+.env
+.env.*
+*.key
+*.pem
+*.crt
+
+# ── Editor ────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
