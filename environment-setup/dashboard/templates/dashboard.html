@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Healthcare IoT Honeypot — Threat Intelligence Dashboard</title>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+
+<!-- Leaflet for map -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<style>
+:root {
+  --bg0: #080c12;
+  --bg1: #0d1520;
+  --bg2: #111d2e;
+  --bg3: #162238;
+  --border: #1e3a5f;
+  --accent: #00d4ff;
+  --accent2: #ff4757;
+  --accent3: #2ed573;
+  --accent4: #ffa502;
+  --text: #c8d8e8;
+  --text-dim: #5a7a9a;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-ui: 'Rajdhani', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg0);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Animated scan line effect */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,212,255,0.015) 2px,
+    rgba(0,212,255,0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── Header ────────────────────────────────────── */
+header {
+  background: var(--bg1);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo-mark {
+  width: 40px; height: 40px;
+  border: 2px solid var(--accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--accent);
+  box-shadow: 0 0 12px rgba(0,212,255,0.3);
+  animation: pulse-border 3s infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% { box-shadow: 0 0 12px rgba(0,212,255,0.3); }
+  50% { box-shadow: 0 0 24px rgba(0,212,255,0.6), inset 0 0 8px rgba(0,212,255,0.1); }
+}
+
+.header-title h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.header-title p {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+}
+
+.header-status {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--accent3);
+  box-shadow: 0 0 6px var(--accent3);
+  animation: blink 2s infinite;
+}
+
+.dot.red { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+.dot.yellow { background: var(--accent4); box-shadow: 0 0 6px var(--accent4); }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+#live-clock {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent);
+}
+
+/* ── Main layout ───────────────────────────────── */
+main {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Stat cards ────────────────────────────────── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.stat-card {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+.stat-card:hover { border-color: var(--accent); }
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 100%;
+  background: var(--accent-color, var(--accent));
+}
+
+.stat-card .label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+
+.stat-card .value {
+  font-family: var(--font-mono);
+  font-size: 32px;
+  font-weight: bold;
+  color: var(--accent-color, var(--accent));
+  line-height: 1;
+}
+
+.stat-card .sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+
+/* ── Panels ────────────────────────────────────── */
+.panel-row {
+  display: grid;
+  gap: 16px;
+}
+
+.panel-row.two-col { grid-template-columns: 1fr 1fr; }
+.panel-row.three-col { grid-template-columns: 2fr 1fr; }
+
+.panel {
+  background: var(--bg1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg2);
+}
+
+.panel-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.panel-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  background: rgba(0,212,255,0.1);
+  border: 1px solid rgba(0,212,255,0.3);
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.panel-body { padding: 16px; }
+
+/* ── Map ───────────────────────────────────────── */
+#attack-map {
+  height: 380px;
+  border-radius: 0 0 8px 8px;
+  filter: hue-rotate(180deg) invert(100%) brightness(0.7) contrast(1.2);
+}
+
+/* ── Tables ────────────────────────────────────── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 8px 10px;
+  color: var(--text-dim);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-ui);
+  font-weight: 600;
+}
+
+.data-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(30,58,95,0.4);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.data-table tr:hover td { background: rgba(0,212,255,0.04); }
+
+.data-table tr:last-child td { border-bottom: none; }
+
+.badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.badge-red    { background: rgba(255,71,87,0.15);  color: var(--accent2); border: 1px solid rgba(255,71,87,0.3); }
+.badge-green  { background: rgba(46,213,115,0.15); color: var(--accent3); border: 1px solid rgba(46,213,115,0.3); }
+.badge-blue   { background: rgba(0,212,255,0.1);   color: var(--accent);  border: 1px solid rgba(0,212,255,0.2); }
+.badge-yellow { background: rgba(255,165,2,0.1);   color: var(--accent4); border: 1px solid rgba(255,165,2,0.3); }
+
+/* ── Live feed ─────────────────────────────────── */
+#live-feed-body tr {
+  animation: fadeInRow 0.4s ease;
+}
+
+@keyframes fadeInRow {
+  from { background: rgba(0,212,255,0.12); }
+  to   { background: transparent; }
+}
+
+/* ── Bar chart list ────────────────────────────── */
+.bar-list { list-style: none; }
+
+.bar-item {
+  margin-bottom: 10px;
+}
+
+.bar-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+
+.bar-label .name { color: var(--text); max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-label .count { color: var(--accent); }
+
+.bar-track {
+  height: 4px;
+  background: var(--bg3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #0098b5);
+  border-radius: 2px;
+  transition: width 0.8s ease;
+}
+
+.bar-fill.red   { background: linear-gradient(90deg, var(--accent2), #b53030); }
+.bar-fill.green { background: linear-gradient(90deg, var(--accent3), #1a9e50); }
+
+/* ── Chart container ───────────────────────────── */
+.chart-wrap { position: relative; height: 200px; }
+
+/* ── Scrollable panel body ─────────────────────── */
+.panel-body.scroll { max-height: 380px; overflow-y: auto; padding-right: 8px; }
+
+.panel-body.scroll::-webkit-scrollbar { width: 4px; }
+.panel-body.scroll::-webkit-scrollbar-track { background: var(--bg2); }
+.panel-body.scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── Loading state ─────────────────────────────── */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+
+.loading::after {
+  content: '...';
+  animation: dots 1.2s infinite;
+}
+
+@keyframes dots {
+  0%   { content: '.'; }
+  33%  { content: '..'; }
+  66%  { content: '...'; }
+}
+
+/* ── ALERT TICKER ──────────────────────────────── */
+.ticker {
+  background: var(--bg1);
+  border: 1px solid var(--accent2);
+  border-radius: 6px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.ticker-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--accent2);
+  white-space: nowrap;
+}
+
+#ticker-text {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  animation: scroll-left 20s linear infinite;
+  white-space: nowrap;
+}
+
+@keyframes scroll-left {
+  from { transform: translateX(100vw); }
+  to   { transform: translateX(-100%); }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────── -->
+<header>
+  <div class="header-left">
+    <div class="logo-mark">⚕</div>
+    <div class="header-title">
+      <h1>Healthcare IoT Honeypot</h1>
+      <p>THREAT INTELLIGENCE DASHBOARD · REAL-TIME ANALYSIS</p>
+    </div>
+  </div>
+  <div class="header-status">
+    <div class="status-pill"><div class="dot"></div>COWRIE ACTIVE</div>
+    <div class="status-pill"><div class="dot yellow"></div>PANEL ACTIVE</div>
+    <div class="status-pill"><div class="dot red"></div>THREATS DETECTED</div>
+    <div id="live-clock">00:00:00 UTC</div>
+  </div>
+</header>
+
+<!-- ── Alert ticker ────────────────────────────────────────── -->
+<div style="padding:10px 24px 0;">
+  <div class="ticker">
+    <span class="ticker-label">⚠ ALERT FEED</span>
+    <span id="ticker-text">Initializing threat feed…</span>
+  </div>
+</div>
+
+<!-- ── Main ───────────────────────────────────────────────── -->
+<main>
+
+  <!-- Stat cards -->
+  <div class="stat-grid">
+    <div class="stat-card" style="--accent-color: var(--accent)">
+      <div class="label">Total Events</div>
+      <div class="value" id="stat-total">—</div>
+      <div class="sub">All honeypot interactions</div>
+    </div>
+    <div class="stat-card" style="--accent-color: var(--accent2)">
+      <div class="label">Auth Failures</div>
+      <div class="value" id="stat-auth-fail">—</div>
+      <div class="sub">Brute-force attempts</div>
+    </div>
+    <div class="stat-card" style="--accent-color: var(--accent3)">
+      <div class="label">Unique Attackers</div>
+      <div class="value" id="stat-ips">—</div>
+      <div class="sub">Distinct source IPs</div>
+    </div>
+    <div class="stat-card" style="--accent-color: var(--accent4)">
+      <div class="label">Countries</div>
+      <div class="value" id="stat-countries">—</div>
+      <div class="sub">Attack origin nations</div>
+    </div>
+    <div class="stat-card" style="--accent-color: var(--accent3)">
+      <div class="label">Commands Executed</div>
+      <div class="value" id="stat-commands">—</div>
+      <div class="sub">Inside fake shell</div>
+    </div>
+    <div class="stat-card" style="--accent-color: var(--accent2)">
+      <div class="label">Malware Drops</div>
+      <div class="value" id="stat-malware">—</div>
+      <div class="sub">Files captured for analysis</div>
+    </div>
+    <div class="stat-card" style="--accent-color: var(--accent)">
+      <div class="label">Auth Successes</div>
+      <div class="value" id="stat-auth-ok">—</div>
+      <div class="sub">Attacker shell logins</div>
+    </div>
+    <div class="stat-card" style="--accent-color: var(--accent4)">
+      <div class="label">Events (24h)</div>
+      <div class="value" id="stat-24h">—</div>
+      <div class="sub">Activity last 24 hours</div>
+    </div>
+  </div>
+
+  <!-- Map + timeline -->
+  <div class="panel-row three-col">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">🌍 Attack Origin Map</span>
+        <span class="panel-badge" id="map-count">0 sources</span>
+      </div>
+      <div id="attack-map"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">📈 Attack Timeline (48h)</span>
+      </div>
+      <div class="panel-body">
+        <div class="chart-wrap">
+          <canvas id="timeline-chart"></canvas>
+        </div>
+      </div>
+      <div class="panel-header" style="border-top:1px solid var(--border);border-bottom:none;margin-top:4px;">
+        <span class="panel-title">🌐 Top Countries</span>
+      </div>
+      <div class="panel-body scroll" id="country-bars">
+        <div class="loading">Loading</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live feed + Top IPs -->
+  <div class="panel-row two-col">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">⚡ Live Attack Feed</span>
+        <span class="panel-badge" id="feed-count">0 events</span>
+      </div>
+      <div class="panel-body" style="padding:0;overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Time</th><th>Type</th><th>Source IP</th>
+              <th>Location</th><th>Credential / Command</th>
+            </tr>
+          </thead>
+          <tbody id="live-feed-body">
+            <tr><td colspan="5" class="loading">Awaiting events</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">🎯 Top Attacker IPs</span>
+      </div>
+      <div class="panel-body scroll" id="top-ips-body">
+        <div class="loading">Loading</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credentials + Commands + Malware -->
+  <div class="panel-row" style="grid-template-columns: 1fr 1fr 1fr;">
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">🔑 Top Credentials Tried</span>
+      </div>
+      <div class="panel-body scroll" id="creds-body">
+        <div class="loading">Loading</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">💻 Top Shell Commands</span>
+      </div>
+      <div class="panel-body scroll" id="commands-body">
+        <div class="loading">Loading</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">🦠 Captured Malware Hashes</span>
+      </div>
+      <div class="panel-body scroll" id="malware-body">
+        <div class="loading">Loading</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── Clock ──────────────────────────────────────────────────────
+function updateClock() {
+  document.getElementById('live-clock').textContent =
+    new Date().toUTCString().split(' ').slice(4,5)[0] + ' UTC';
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Map init ───────────────────────────────────────────────────
+const map = L.map('attack-map', { zoomControl: false, attributionControl: false })
+  .setView([20, 0], 2);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+// ── Fetch helpers ──────────────────────────────────────────────
+async function fetchJSON(url) {
+  try {
+    const r = await fetch(url);
+    return await r.json();
+  } catch { return null; }
+}
+
+// ── Stats ──────────────────────────────────────────────────────
+async function loadStats() {
+  const d = await fetchJSON('/api/stats');
+  if (!d) return;
+  document.getElementById('stat-total').textContent    = d.total_events.toLocaleString();
+  document.getElementById('stat-auth-fail').textContent= d.auth_failures.toLocaleString();
+  document.getElementById('stat-ips').textContent      = d.unique_ips.toLocaleString();
+  document.getElementById('stat-countries').textContent= d.countries_seen;
+  document.getElementById('stat-commands').textContent = d.commands_executed.toLocaleString();
+  document.getElementById('stat-malware').textContent  = d.malware_drops;
+  document.getElementById('stat-auth-ok').textContent  = d.auth_successes;
+  document.getElementById('stat-24h').textContent      = d.events_last_24h.toLocaleString();
+}
+
+// ── Live feed ──────────────────────────────────────────────────
+const EVENT_COLORS = {
+  AUTH_FAIL: 'badge-red', AUTH_SUCCESS: 'badge-green',
+  COMMAND: 'badge-blue', FILE_DROP: 'badge-yellow',
+  CONNECT: 'badge-blue', DISCONNECT: 'badge-blue',
+};
+
+async function loadFeed() {
+  const events = await fetchJSON('/api/recent_events');
+  if (!events) return;
+  document.getElementById('feed-count').textContent = events.length + ' events';
+
+  const tbody = document.getElementById('live-feed-body');
+  tbody.innerHTML = events.map(e => {
+    const cls = EVENT_COLORS[e.event_type] || 'badge-blue';
+    const time = e.timestamp ? e.timestamp.slice(11,19) : '--';
+    const detail = e.command || (e.username ? `${e.username}:${e.password}` : '—');
+    return `<tr>
+      <td>${time}</td>
+      <td><span class="badge ${cls}">${e.event_type}</span></td>
+      <td>${e.src_ip}</td>
+      <td>${e.city || ''}${e.country ? ', '+e.country : ''}</td>
+      <td title="${detail}">${detail.slice(0,40)}</td>
+    </tr>`;
+  }).join('');
+
+  // Update ticker
+  const recent = events.slice(0,5);
+  document.getElementById('ticker-text').textContent =
+    recent.map(e => `[${e.src_ip}] ${e.event_type} — ${e.country||'?'}`).join('  ▸  ');
+}
+
+// ── Map ────────────────────────────────────────────────────────
+const mapMarkers = [];
+async function loadMap() {
+  const data = await fetchJSON('/api/map_data');
+  if (!data) return;
+  document.getElementById('map-count').textContent = data.length + ' sources';
+
+  mapMarkers.forEach(m => m.remove());
+  mapMarkers.length = 0;
+
+  data.forEach(d => {
+    if (!d.lat || !d.lon) return;
+    const size = Math.min(6 + Math.log2(d.event_count + 1) * 3, 20);
+    const circle = L.circleMarker([d.lat, d.lon], {
+      radius: size,
+      fillColor: '#ff4757',
+      color: '#ff0',
+      weight: 1,
+      opacity: 0.8,
+      fillOpacity: 0.6
+    }).addTo(map);
+    circle.bindPopup(
+      `<b>${d.src_ip}</b><br>${d.city}, ${d.country}<br>
+       ISP: ${d.isp||'?'}<br>Events: <b>${d.event_count}</b>`
+    );
+    mapMarkers.push(circle);
+  });
+}
+
+// ── Timeline chart ─────────────────────────────────────────────
+let timelineChart = null;
+async function loadTimeline() {
+  const data = await fetchJSON('/api/timeline');
+  if (!data || !data.length) return;
+
+  const labels = data.map(d => d.hour.slice(11,16));
+  const counts = data.map(d => d.count);
+
+  if (timelineChart) {
+    timelineChart.data.labels = labels;
+    timelineChart.data.datasets[0].data = counts;
+    timelineChart.update();
+    return;
+  }
+
+  const ctx = document.getElementById('timeline-chart').getContext('2d');
+  timelineChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Events',
+        data: counts,
+        borderColor: '#00d4ff',
+        backgroundColor: 'rgba(0,212,255,0.08)',
+        borderWidth: 2,
+        pointRadius: 2,
+        fill: true,
+        tension: 0.4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { ticks: { color: '#5a7a9a', maxTicksLimit: 8, font: { family: 'Share Tech Mono', size: 10 } },
+             grid: { color: 'rgba(30,58,95,0.5)' } },
+        y: { ticks: { color: '#5a7a9a', font: { family: 'Share Tech Mono', size: 10 } },
+             grid: { color: 'rgba(30,58,95,0.5)' } }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+// ── Country bars ───────────────────────────────────────────────
+async function loadCountries() {
+  const data = await fetchJSON('/api/country_stats');
+  if (!data || !data.length) return;
+  const max = data[0].attacks;
+  document.getElementById('country-bars').innerHTML = `<ul class="bar-list">
+    ${data.map(c => `
+      <li class="bar-item">
+        <div class="bar-label">
+          <span class="name">${c.country_code} · ${c.country}</span>
+          <span class="count">${c.attacks}</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(c.attacks/max*100).toFixed(1)}%"></div></div>
+      </li>`).join('')}
+  </ul>`;
+}
+
+// ── Top IPs ────────────────────────────────────────────────────
+async function loadTopIPs() {
+  const data = await fetchJSON('/api/top_ips');
+  if (!data || !data.length) return;
+  const max = data[0].hits;
+  document.getElementById('top-ips-body').innerHTML = `<ul class="bar-list">
+    ${data.map(ip => `
+      <li class="bar-item">
+        <div class="bar-label">
+          <span class="name">${ip.src_ip} <span style="color:var(--text-dim);font-size:10px">${ip.country||''}</span></span>
+          <span class="count">${ip.hits} hits</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill red" style="width:${(ip.hits/max*100).toFixed(1)}%"></div></div>
+      </li>`).join('')}
+  </ul>`;
+}
+
+// ── Credentials ────────────────────────────────────────────────
+async function loadCreds() {
+  const data = await fetchJSON('/api/top_credentials');
+  if (!data || !data.length) {
+    document.getElementById('creds-body').innerHTML = '<div class="loading">No data yet</div>';
+    return;
+  }
+  const max = data[0].attempts;
+  document.getElementById('creds-body').innerHTML = `<ul class="bar-list">
+    ${data.map(c => `
+      <li class="bar-item">
+        <div class="bar-label">
+          <span class="name">${c.username} / ${c.password}</span>
+          <span class="count">${c.attempts}×</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(c.attempts/max*100).toFixed(1)}%"></div></div>
+      </li>`).join('')}
+  </ul>`;
+}
+
+// ── Commands ───────────────────────────────────────────────────
+async function loadCommands() {
+  const data = await fetchJSON('/api/top_commands');
+  if (!data || !data.length) {
+    document.getElementById('commands-body').innerHTML = '<div class="loading">No commands yet</div>';
+    return;
+  }
+  const max = data[0].count;
+  document.getElementById('commands-body').innerHTML = `<ul class="bar-list">
+    ${data.map(c => `
+      <li class="bar-item">
+        <div class="bar-label">
+          <span class="name" title="${c.command}">${c.command.slice(0,35)}</span>
+          <span class="count">${c.count}×</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill green" style="width:${(c.count/max*100).toFixed(1)}%"></div></div>
+      </li>`).join('')}
+  </ul>`;
+}
+
+// ── Malware ────────────────────────────────────────────────────
+async function loadMalware() {
+  const data = await fetchJSON('/api/malware_hashes');
+  if (!data || !data.length) {
+    document.getElementById('malware-body').innerHTML = '<div class="loading">No drops yet</div>';
+    return;
+  }
+  document.getElementById('malware-body').innerHTML = data.map(m => `
+    <div style="margin-bottom:12px;padding:8px;background:var(--bg2);border-radius:4px;border:1px solid var(--border)">
+      <div style="font-family:var(--font-mono);font-size:10px;color:var(--accent2);word-break:break-all">${m.file_hash}</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">${m.src_ip} · ${m.country} · ${m.timestamp.slice(0,19)}</div>
+    </div>
+  `).join('');
+}
+
+// ── Bootstrap & refresh ────────────────────────────────────────
+async function refreshAll() {
+  await Promise.all([
+    loadStats(), loadFeed(), loadMap(),
+    loadTimeline(), loadCountries(), loadTopIPs(),
+    loadCreds(), loadCommands(), loadMalware(),
+  ]);
+}
+
+refreshAll();
+setInterval(refreshAll, 15000);   // auto-refresh every 15 seconds
+</script>
+</body>
+</html>
