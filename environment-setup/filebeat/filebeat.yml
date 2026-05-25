@@ -1,0 +1,33 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /cowrie/var/log/cowrie/cowrie.json
+    json.keys_under_root: true
+    json.add_error_key: true
+    tags: ["cowrie", "honeypot", "ssh"]
+
+  - type: log
+    enabled: true
+    paths:
+      - /app/logs/panel.log
+    json.keys_under_root: true
+    json.add_error_key: true
+    tags: ["fake_panel", "honeypot", "web"]
+
+processors:
+  - add_host_metadata: {}
+  - add_docker_metadata: {}
+  - drop_fields:
+      fields: ["agent.ephemeral_id", "ecs.version"]
+      ignore_missing: true
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  index: "honeypot-logs-%{+yyyy.MM.dd}"
+
+setup.ilm.enabled: false
+setup.template.name: "honeypot"
+setup.template.pattern: "honeypot-*"
+
+logging.level: warning
