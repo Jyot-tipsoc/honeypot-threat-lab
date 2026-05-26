@@ -1,0 +1,2 @@
+time="2026-05-24T22:48:00+05:30" level=warning msg="/home/komal/Downloads/honeypot-threat-lab/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+no such service:  
