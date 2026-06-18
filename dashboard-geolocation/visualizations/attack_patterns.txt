@@ -1,0 +1,47 @@
+=================================================================
+  ATTACK PATTERN VISUALIZATION REPORT
+  Generated: 2026-06-18T12:22:33.168712Z
+=================================================================
+
+EVENT TYPE DISTRIBUTION
+-----------------------------------------------------------------
+  cowrie.session.connect                     12 (13.6%) ████████████████████████████████████████
+  cowrie.client.version                      12 (13.6%) ████████████████████████████████████████
+  cowrie.client.kex                          12 (13.6%) ████████████████████████████████████████
+  cowrie.session.closed                      12 (13.6%) ████████████████████████████████████████
+  cowrie.login.success                        7 (8.0%) ███████████████████████
+  cowrie.client.var                           7 (8.0%) ███████████████████████
+  cowrie.session.params                       7 (8.0%) ███████████████████████
+  cowrie.command.input                        7 (8.0%) ███████████████████████
+  cowrie.log.closed                           7 (8.0%) ███████████████████████
+  cowrie.login.failed                         5 (5.7%) ████████████████
+
+HOURLY ATTACK PATTERN
+-----------------------------------------------------------------
+  2026-06-14T17    88  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+
+TOP CREDENTIAL PAIRS ATTEMPTED
+-----------------------------------------------------------------
+  USERNAME        PASSWORD        COUNT
+-----------------------------------------------------------------
+  root            root            4
+  root            123456          1
+
+COMMANDS EXECUTED IN FAKE SHELL
+-----------------------------------------------------------------
+  $ whoami
+  $ whoami
+  $ whoami
+  $ whoami
+  $ whoami
+  $ whoami
+  $ whoami
+
+RISK ASSESSMENT
+-----------------------------------------------------------------
+  Total Events      : 88
+  Successful Logins : 7
+  Risk Level        : CRITICAL
+  Recommendation    : Immediate credential rotation required
+
+=================================================================
