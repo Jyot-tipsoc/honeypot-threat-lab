@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-06-18T12:09:45.096418Z",
+  "lab_note": "Attacks from 172.20.0.1 (Docker internal) - simulated lab environment",
+  "total_events": 88,
+  "geo_enriched_ips": [
+    {
+      "ip": "172.20.0.1",
+      "country": "Internal Network",
+      "country_code": "INT",
+      "city": "Lab Environment",
+      "lat": 0,
+      "lon": 0,
+      "isp": "Docker Bridge Network",
+      "note": "Private IP - Docker lab environment",
+      "event_count": 88
+    }
+  ]
+}
