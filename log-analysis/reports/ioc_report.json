@@ -1,0 +1,89 @@
+{
+  "generated_at": "2026-06-18T10:22:20.640079Z",
+  "summary": {
+    "total_events": 88,
+    "unique_ips": 1,
+    "auth_failures": 5,
+    "auth_successes": 7,
+    "commands_executed": 7
+  },
+  "attacker_ips": [
+    {
+      "ip": "172.20.0.1",
+      "threat_level": "HIGH"
+    }
+  ],
+  "top_credentials": [
+    {
+      "username": "root",
+      "password": "letmein"
+    },
+    {
+      "username": "root",
+      "password": "admin"
+    },
+    {
+      "username": "root",
+      "password": "wrong1"
+    },
+    {
+      "username": "root",
+      "password": "123456"
+    },
+    {
+      "username": "root",
+      "password": "password"
+    },
+    {
+      "username": "root",
+      "password": "wrong2"
+    },
+    {
+      "username": "root",
+      "password": "toor"
+    },
+    {
+      "username": "root",
+      "password": "root"
+    },
+    {
+      "username": "root",
+      "password": "raspberry"
+    }
+  ],
+  "suspicious_commands": [
+    "whoami",
+    "whoami",
+    "whoami",
+    "whoami",
+    "whoami",
+    "whoami",
+    "whoami"
+  ],
+  "ttps": [
+    {
+      "technique": "T1110",
+      "name": "Brute Force"
+    },
+    {
+      "technique": "T1078",
+      "name": "Valid Accounts"
+    },
+    {
+      "technique": "T1059",
+      "name": "Command Execution"
+    },
+    {
+      "technique": "T1105",
+      "name": "Ingress Tool Transfer"
+    },
+    {
+      "technique": "T1053",
+      "name": "Scheduled Task"
+    },
+    {
+      "technique": "T1003",
+      "name": "Credential Dumping"
+    }
+  ]
+}

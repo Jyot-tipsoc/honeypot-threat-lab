@@ -1,0 +1,36 @@
+============================================================
+  IoC REPORT — Healthcare IoT Honeypot
+  Generated: 2026-06-18T10:22:20.640079Z
+============================================================
+
+SUMMARY
+-------
+  Total Events     : 88
+  Unique IPs       : 1
+  Auth Failures    : 5
+  Auth Successes   : 7
+  Commands Run     : 7
+
+ATTACKER IPs
+------------
+  172.20.0.1  [HIGH]
+
+TTPs IDENTIFIED (MITRE ATT&CK)
+------------------------------
+  T1110  Brute Force
+  T1078  Valid Accounts
+  T1059  Command Execution
+  T1105  Ingress Tool Transfer
+  T1053  Scheduled Task
+  T1003  Credential Dumping
+
+SUSPICIOUS COMMANDS
+-------------------
+  $ whoami
+  $ whoami
+  $ whoami
+  $ whoami
+  $ whoami
+  $ whoami
+  $ whoami
+============================================================
