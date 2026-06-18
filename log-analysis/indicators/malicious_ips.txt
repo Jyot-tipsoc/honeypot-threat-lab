@@ -1,0 +1,7 @@
+MALICIOUS IP REPORT
+============================================================
+Total Unique IPs: 1
+
+  IP ADDRESS         EVENTS   LOGINS   SHELLS   THREAT
+------------------------------------------------------------
+  172.20.0.1         88       5        7        HIGH
